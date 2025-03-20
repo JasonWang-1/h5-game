@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>天降红包小游戏</title>
     <style>
         body {
@@ -21,8 +21,8 @@
 
         .red-envelope {
             position: absolute;
-            width: 45px;
-            height: 115.17px;
+            width: 10vw;
+            height: auto;
             background-image: url('https://i.imgur.com/KWXs9i6.png');
             background-size: cover;
         }
@@ -30,8 +30,8 @@
         #player {
             position: absolute;
             bottom: 0;
-            width: 179px;
-            height: 140px;
+            width: 30vw;
+            height: auto;
             background-image: url('https://i.imgur.com/unWE9ek.png');
             background-size: cover;
         }
@@ -40,9 +40,31 @@
             position: absolute;
             top: 10px;
             left: 10px;
-            font-size: 24px;
+            font-size: 6vw;
             font-weight: bold;
             color: white;
+        }
+
+        #timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 6vw;
+            font-weight: bold;
+            color: white;
+        }
+
+        #start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            font-size: 6vw;
+            background-color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
 
         .star {
@@ -68,7 +90,7 @@
 
         .meteor {
             position: absolute;
-            width: 100px;
+            width: 20vw;
             height: 2px;
             background: linear-gradient(to right, white, transparent);
             transform-origin: left center;
@@ -88,8 +110,8 @@
 
         .catch-effect {
             position: absolute;
-            width: 200px;
-            height: 200px;
+            width: 40vw;
+            height: 40vw;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
             animation: catchEffect 0.5s ease-out;
@@ -114,12 +136,19 @@
     <div id="game-container">
         <div id="player"></div>
         <div id="score">得分: 0</div>
+        <div id="timer">倒计时: 60</div>
+        <button id="start-button">开始游戏</button>
     </div>
     <script>
         const gameContainer = document.getElementById('game-container');
         const player = document.getElementById('player');
         const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const startButton = document.getElementById('start-button');
         let score = 0;
+        let timeLeft = 60;
+        let gameInterval;
+        let timerInterval;
         const redEnvelopes = [];
         const meteors = [];
 
@@ -136,18 +165,27 @@
         }
 
         // 移动玩家
-        document.addEventListener('mousemove', function (event) {
-            const x = event.clientX - player.offsetWidth / 2;
+        function handlePlayerMove(event) {
+            let x;
+            if (event.type === 'mousemove') {
+                x = event.clientX - player.offsetWidth / 2;
+            } else if (event.type === 'touchmove') {
+                x = event.touches[0].clientX - player.offsetWidth / 2;
+            }
             player.style.left = x + 'px';
-        });
+        }
+
+        document.addEventListener('mousemove', handlePlayerMove);
+        document.addEventListener('touchmove', handlePlayerMove);
 
         // 生成红包
         function createRedEnvelope() {
             const redEnvelope = document.createElement('div');
             redEnvelope.classList.add('red-envelope');
             redEnvelope.style.left = Math.random() * (gameContainer.offsetWidth - 50) + 'px';
-            redEnvelope.speed = 2;
-            redEnvelope.acceleration = 0.01;
+            // 提高初始速度和加速度，让红包下落更快
+            redEnvelope.speed = 5; 
+            redEnvelope.acceleration = 0.05; 
             gameContainer.appendChild(redEnvelope);
             redEnvelopes.push(redEnvelope);
         }
@@ -218,14 +256,26 @@
             );
         }
 
-        // 定时生成红包
-        setInterval(createRedEnvelope, 1000);
+        // 开始游戏
+        function startGame() {
+            startButton.style.display = 'none';
+            gameInterval = setInterval(() => {
+                createRedEnvelope();
+                moveRedEnvelopes();
+            }, 1000);
+            setInterval(createMeteor, 3000);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = `倒计时: ${timeLeft}`;
+                if (timeLeft <= 0) {
+                    clearInterval(gameInterval);
+                    clearInterval(timerInterval);
+                    alert(`游戏结束！你的得分是: ${score}`);
+                }
+            }, 1000);
+        }
 
-        // 定时生成流星
-        setInterval(createMeteor, 3000);
-
-        // 定时移动红包
-        setInterval(moveRedEnvelopes, 30);
+        startButton.addEventListener('click', startGame);
 
         // 生成小星星
         createStars();
